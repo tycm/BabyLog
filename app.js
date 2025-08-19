@@ -1,7 +1,8 @@
-/*
-  Simple baby log using localStorage for JSON storage.
-  Entry format: {type: "pee"|"poop"|"both"|"feed_start"|"feed_stop", ts: 1234567890}
+/* app.js
+   Simple baby log using localStorage for JSON storage.
+   Entry format: {type: "pee"|"poop"|"both"|"feed_start"|"feed_stop", ts: 1234567890}
 */
+
 const STORAGE_KEY = 'baby_log_entries_v1';
 
 function loadLog(){
@@ -70,7 +71,7 @@ function render(){
   }
   // update feed button label
   const feedBtn = document.getElementById('feed');
-  feedBtn.textContent = (lastFeedState() === 'stopped') ? 'Start Feed' : 'Stop Feed';
+  if(feedBtn) feedBtn.textContent = (lastFeedState() === 'stopped') ? 'Start Feed' : 'Stop Feed';
 }
 function relativeLabel(ts){
   const diff = Date.now() - ts;
@@ -84,10 +85,22 @@ function relativeLabel(ts){
   return `${d}d`;
 }
 
+// merge two entry arrays, avoiding exact duplicates (by ts+type)
+// returns chronological array (oldest first)
+function mergeEntries(oldEntries, newEntries){
+  const map = new Map();
+  for(const e of oldEntries) map.set(`${e.ts}|${e.type}`, e);
+  for(const e of newEntries) map.set(`${e.ts}|${e.type}`, e);
+  return Array.from(map.values()).sort((a,b)=> a.ts - b.ts);
+}
+
+// Event listeners
 document.getElementById('pee').addEventListener('click', ()=> addEntry('pee'));
 document.getElementById('poop').addEventListener('click', ()=> addEntry('poop'));
 document.getElementById('both').addEventListener('click', ()=> addEntry('both'));
 document.getElementById('feed').addEventListener('click', toggleFeed);
+
+// Export
 document.getElementById('export').addEventListener('click', ()=>{
   const data = loadLog();
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -98,6 +111,37 @@ document.getElementById('export').addEventListener('click', ()=>{
   a.click();
   URL.revokeObjectURL(url);
 });
+
+// Import UI: wired to #importBtn and #importFile in index.html
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('importFile');
+  if(input) input.click();
+});
+
+document.getElementById('importFile').addEventListener('change', async (ev)=>{
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = ''; // reset so same file can be reselected
+  if(!f) return;
+  try{
+    const text = await f.text();
+    const parsed = JSON.parse(text);
+    if(!Array.isArray(parsed)) throw new Error('Imported JSON must be an array of entries');
+    // basic validation of entries: must have type (string) and ts (number)
+    const valid = parsed.every(p => p && typeof p.type === 'string' && typeof p.ts === 'number');
+    if(!valid) throw new Error('Entries must be objects with "type" (string) and "ts" (number)');
+    const existing = loadLog();
+    const choice = confirm('Press OK to MERGE imported entries into existing log. Press Cancel to REPLACE the log with imported entries.');
+    const result = choice ? mergeEntries(existing, parsed) : parsed.slice().sort((a,b)=>a.ts-b.ts);
+    saveLog(result);
+    render();
+    alert('Import successful');
+  } catch(err){
+    console.error(err);
+    alert('Import failed: ' + (err.message || err));
+  }
+});
+
+// Clear
 document.getElementById('clear').addEventListener('click', ()=>{
   if(confirm('Clear entire log?')){ localStorage.removeItem(STORAGE_KEY); render(); }
 });
