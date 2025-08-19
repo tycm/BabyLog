@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Baby Log</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Baby Log">
+  <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+  <main>
+    <h1>Baby Log</h1>
+
+    <div class="buttons">
+      <button id="pee">Pee</button>
+      <button id="poop">Poop</button>
+      <button id="both">Both</button>
+      <button id="feed">Start Feed</button>
+    </div>
+
+    <div class="controls">
+      <button id="export">Export JSON</button>
+      <button id="clear">Clear Log</button>
+    </div>
+
+    <section id="logSection">
+      <h2>Recent Entries</h2>
+      <ul id="logList"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

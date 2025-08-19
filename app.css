@@ -1,0 +1,47 @@
+/* Simple responsive minimal styling */
+:root{
+  --bg:#f8f8fa;
+  --card:#fff;
+  --accent:#0b84ff;
+  --danger:#ff7043;
+  --muted:#666;
+}
+html,body {height:100%;}
+body{
+  margin:0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  box-sizing:border-box;
+}
+main{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  padding:18px;
+  border-radius:12px;
+  box-shadow:0 6px 22px rgba(0,0,0,0.08);
+}
+h1{margin:0 0 12px 0; font-size:20px;}
+.buttons{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px;}
+button{
+  padding:14px;
+  font-size:16px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,0.06);
+  background:white;
+  cursor:pointer;
+}
+#pee{background:linear-gradient(180deg,#e9f5ff,#d6edff); color:var(--accent);}
+#poop{background:linear-gradient(180deg,#fff6e6,#fff1da);}
+#both{background:linear-gradient(180deg,#f7f7f8,#efeff1);}
+#feed{background:linear-gradient(180deg,#eaffed,#d6f8dc);}
+.controls{display:flex; gap:10px; margin-bottom:12px;}
+#logSection{max-height:300px; overflow:auto; border-top:1px solid #eee; padding-top:12px;}
+#logList{list-style:none; padding:0; margin:0;}
+.logItem{padding:10px; border-radius:8px; margin-bottom:8px; background:#fafafa; font-size:14px; display:flex; justify-content:space-between;}
+.meta{color:var(--muted); font-size:12px; margin-top:6px;}
