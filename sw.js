@@ -5,7 +5,6 @@ const FILES = [
   'app.css',
   'app.js',
   'manifest.json'
-  // icons if present
 ];
 
 self.addEventListener('install', e => {
