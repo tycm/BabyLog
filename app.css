@@ -19,7 +19,7 @@ body{
 }
 main{
   width:100%;
-  max-width:420px;
+  max-width:720px;
   background:var(--card);
   padding:18px;
   border-radius:12px;
@@ -28,15 +28,16 @@ main{
 h1{margin:0 0 12px 0; font-size:20px;}
 
 /* Counters */
-.counters{display:flex; gap:10px; margin:10px 0 14px 0; justify-content:space-between;}
-.counter{flex:1; background:#fff; border-radius:8px; padding:8px 10px; text-align:center; box-shadow:0 1px 0 rgba(0,0,0,0.03);}
+.counters{display:flex; gap:10px; margin:10px 0 14px 0; justify-content:space-between; flex-wrap:wrap;}
+.counter{flex:1; min-width:120px; background:#fff; border-radius:8px; padding:8px 10px; text-align:center; box-shadow:0 1px 0 rgba(0,0,0,0.03);}
 .counter strong{display:block; font-size:18px;}
 .counter .small{font-size:12px;color:var(--muted); margin-top:6px;}
+.counter .tiny{font-size:11px;color:#999;margin-top:4px;}
 
-.buttons{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px;}
+.buttons{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0;}
 button{
-  padding:14px;
-  font-size:16px;
+  padding:12px;
+  font-size:15px;
   border-radius:10px;
   border:1px solid rgba(0,0,0,0.06);
   background:white;
@@ -46,8 +47,15 @@ button{
 #poop{background:linear-gradient(180deg,#fff6e6,#fff1da);}
 #both{background:linear-gradient(180deg,#f7f7f8,#efeff1);}
 #feed{background:linear-gradient(180deg,#eaffed,#d6f8dc);}
-.controls{display:flex; gap:10px; margin-bottom:12px;}
-#logSection{max-height:300px; overflow:auto; border-top:1px solid #eee; padding-top:12px;}
+
+.note-row{display:flex; gap:8px; margin:8px 0;}
+.note-row input{flex:1; padding:10px; border-radius:8px; border:1px solid #eee; font-size:14px;}
+
+.controls{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+#logSection{max-height:360px; overflow:auto; border-top:1px solid #eee; padding-top:12px;}
 #logList{list-style:none; padding:0; margin:0;}
-.logItem{padding:10px; border-radius:8px; margin-bottom:8px; background:#fafafa; font-size:14px; display:flex; justify-content:space-between;}
-.meta{color:var(--muted); font-size:12px; margin-top:6px;}
+.logItem{padding:10px; border-radius:8px; margin-bottom:8px; background:#fafafa; font-size:14px; display:flex; justify-content:space-between; align-items:center;}
+.logLeft{display:flex; flex-direction:column;}
+.logMeta{color:var(--muted); font-size:12px; margin-top:6px;}
+.logNote{font-size:12px; color:#333; margin-top:4px;}
+.smallBtn{font-size:12px; padding:6px 8px; border-radius:6px; background:#fff; border:1px solid #eee; cursor:pointer;}

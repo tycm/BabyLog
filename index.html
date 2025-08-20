@@ -18,18 +18,21 @@
       <div class="counter">
         <strong id="countPee">0</strong>
         <div class="small">Pee (24h)</div>
+        <div class="tiny" id="avgPee">Avg/day (7d): 0</div>
       </div>
       <div class="counter">
         <strong id="countPoop">0</strong>
         <div class="small">Poop (24h)</div>
+        <div class="tiny" id="avgPoop">Avg/day (7d): 0</div>
       </div>
       <div class="counter">
         <strong id="countFeed">0</strong>
         <div class="small">Feedings (24h)</div>
+        <div class="tiny" id="avgFeed">Avg/day (7d): 0</div>
       </div>
       <div class="counter">
-        <strong id="avgWeek">0</strong>
-        <div class="small">Avg/day (7d)</div>
+        <strong id="avgTotal">0</strong>
+        <div class="small">Total Avg/day (7d)</div>
       </div>
     </div>
 
@@ -40,10 +43,17 @@
       <button id="feed">Start Feed</button>
     </div>
 
+    <div class="note-row">
+      <input id="noteInput" type="text" placeholder="Optional note (e.g. amount, side, diaper color)" />
+      <button id="addWithNote">Add with Note</button>
+    </div>
+
     <div class="controls">
       <button id="export">Export JSON</button>
       <button id="importBtn">Import JSON</button>
       <input type="file" id="importFile" accept="application/json" style="display:none" />
+      <button id="shareBtn">Copy Share URL</button>
+      <button id="printBtn">Print 24h PDF</button>
       <button id="clear">Clear Log</button>
     </div>
 
