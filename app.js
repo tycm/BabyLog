@@ -149,8 +149,6 @@ function render(){
       if(e.note) left.innerHTML += `<div class="logNote">${escapeHtml(e.note)}</div>`;
 
       const right = document.createElement('div');
-      const editBtn = document.createElement('button'); editBtn.className='smallBtn'; editBtn.textContent='Edit';
-      editBtn.addEventListener('click', ()=> editEntry(e));
       const delBtn = document.createElement('button'); delBtn.className='smallBtn'; delBtn.textContent='Delete';
       delBtn.style.marginLeft='8px';
       delBtn.addEventListener('click', ()=> {
