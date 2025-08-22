@@ -208,17 +208,6 @@ function setupListeners(){
   if(poopBtn) poopBtn.addEventListener('click', ()=> { addEntry('poop'); });
   if(feedBtn) feedBtn.addEventListener('click', ()=> { toggleFeed(); });
 
-  if(addWithNote && noteInput){
-    addWithNote.addEventListener('click', ()=>{
-      const note = noteInput.value.trim();
-      const type = prompt('Type for entry: P=pee, O=poop, B=both, S=start feed, E=end feed','P') || 'P';
-      const map = {'P':'pee','O':'poop','B':'both','S':'feed_start','E':'feed_stop'};
-      const t = map[type.toUpperCase()] || 'pee';
-      addEntry(t, note);
-      noteInput.value = '';
-    });
-  }
-
   if(exportBtn) exportBtn.addEventListener('click', exportJSON);
   if(importBtn && importFile){
     importBtn.addEventListener('click', ()=> importFile.click());
