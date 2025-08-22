@@ -71,7 +71,6 @@ function countsFromEntries(entries){
   for(const e of entries){
     if(e.type === 'pee') pee++;
     else if(e.type === 'poop') poop++;
-    else if(e.type === 'both'){ pee++; poop++; }
     else if(e.type === 'feed_start') feed++;
   }
   return {pee, poop, feed};
@@ -81,43 +80,6 @@ function updateCounters(){
   const now = Date.now();
   const last24 = entriesInWindow(MS_DAY);
   const c24 = countsFromEntries(last24);
-
-  // 7-day buckets
-  const entries = loadLog();
-  const dayBuckets = new Array(7).fill(0).map(()=> ({pee:0,poop:0,feed:0}));
-  for(const e of entries){
-    const age = now - e.ts;
-    if(age > 7 * MS_DAY) continue;
-    const dayIndex = Math.floor(age / MS_DAY); // 0 = today
-    if(dayIndex < 0 || dayIndex >= 7) continue;
-    if(e.type === 'pee') dayBuckets[dayIndex].pee++;
-    else if(e.type === 'poop') dayBuckets[dayIndex].poop++;
-    else if(e.type === 'both'){ dayBuckets[dayIndex].pee++; dayBuckets[dayIndex].poop++; }
-    else if(e.type === 'feed_start') dayBuckets[dayIndex].feed++;
-  }
-
-  const totals = dayBuckets.reduce((acc,d)=>{ acc.pee+=d.pee; acc.poop+=d.poop; acc.feed+=d.feed; return acc; }, {pee:0,poop:0,feed:0});
-  const avgPerDay = {
-    pee: +(totals.pee / 7).toFixed(1),
-    poop: +(totals.poop / 7).toFixed(1),
-    feed: +(totals.feed / 7).toFixed(1)
-  };
-
-  const peeEl = document.getElementById('countPee');
-  const poopEl = document.getElementById('countPoop');
-  const feedEl = document.getElementById('countFeed');
-  const avgPee = document.getElementById('avgPee');
-  const avgPoop = document.getElementById('avgPoop');
-  const avgFeed = document.getElementById('avgFeed');
-  const avgTotal = document.getElementById('avgTotal');
-
-  if(peeEl) peeEl.textContent = c24.pee;
-  if(poopEl) poopEl.textContent = c24.poop;
-  if(feedEl) feedEl.textContent = c24.feed;
-  if(avgPee) avgPee.textContent = 'Avg/day (7d): ' + avgPerDay.pee;
-  if(avgPoop) avgPoop.textContent = 'Avg/day (7d): ' + avgPerDay.poop;
-  if(avgFeed) avgFeed.textContent = 'Avg/day (7d): ' + avgPerDay.feed;
-  if(avgTotal) avgTotal.textContent = (avgPerDay.pee + avgPerDay.poop + avgPerDay.feed).toFixed(1);
 }
 
 // ---------- import/export/merge ----------
@@ -158,147 +120,6 @@ async function handleImportFile(file){
     console.error(err);
     alert('Import failed: ' + (err.message || err));
   }
-}
-
-// ---------- compact share URL (fixed 11-char entries) ----------
-/*
-  Compact string format chosen for share URLs:
-  - Entry encoded as: <Type><YYMMDDhhmm><optional single-char noteFlagIndex>
-  - Type: P (pee), O (poop), B (both), S (feed_start), E (feed_stop)
-  - Timestamp: YYMMDDhhmm (10 digits)
-  - If a short note is present it will be stored separately: we place full notes in a simple base64 chunk after a separator when necessary.
-  Strategy implemented: create two parts:
-    1) compactEntries = sequence of 11-char fixed entries (type + 10 digits + optional 0 char)
-    2) notesPart (optional) = b64url(JSON array parallel to entries) appended after "#notes=" for safety
-  Final share payload placed in query param ?d=COMPACT (URL-safe)
-*/
-
-function pad2(n){ return n.toString().padStart(2,'0'); }
-function encodeEntryCompact(e){
-  // type letter + YYMMDDhhmm
-  const d = new Date(e.ts);
-  const yy = String(d.getFullYear()).slice(-2);
-  const mm = pad2(d.getMonth()+1);
-  const dd = pad2(d.getDate());
-  const hh = pad2(d.getHours());
-  const min = pad2(d.getMinutes());
-  return (e.type[0].toUpperCase() || 'X') + yy + mm + dd + hh + min;
-}
-function decodeEntryCompact(s){
-  // s length 11: TYYMMDDhhmm
-  const t = s[0];
-  const yy = s.slice(1,3);
-  const mm = s.slice(3,5);
-  const dd = s.slice(5,7);
-  const hh = s.slice(7,9);
-  const min = s.slice(9,11);
-  const year = 2000 + parseInt(yy,10);
-  const ts = new Date(year, parseInt(mm,10)-1, parseInt(dd,10), parseInt(hh,10), parseInt(min,10)).getTime();
-  let type = 'unknown';
-  if(t === 'P') type = 'pee';
-  else if(t === 'O') type = 'poop';
-  else if(t === 'B') type = 'both';
-  else if(t === 'S') type = 'feed_start';
-  else if(t === 'E') type = 'feed_stop';
-  return {type, ts};
-}
-function b64urlEncode(u8str){
-  return btoa(unescape(encodeURIComponent(u8str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function b64urlDecode(str){
-  str = str.replace(/-/g,'+').replace(/_/g,'/');
-  while(str.length %4) str += '=';
-  return decodeURIComponent(escape(atob(str)));
-}
-
-// create share URL (copies to clipboard)
-function createShareURL(){
-  const entries = loadLog();
-  if(entries.length === 0){ alert('No entries to share'); return; }
-  // build compact body and collect notes
-  const compactParts = [];
-  const notes = [];
-  for(const e of entries){
-    compactParts.push(encodeEntryCompact(e));
-    notes.push(e.note || '');
-  }
-  const compact = compactParts.join(''); // fixed-size blocks
-  // include notes only if any non-empty
-  let url = location.origin + location.pathname + '?d=' + encodeURIComponent(compact);
-  const anyNotes = notes.some(n => n && n.length > 0);
-  if(anyNotes){
-    const notesJson = JSON.stringify(notes);
-    const notesB64 = b64urlEncode(notesJson);
-    url += '&n=' + notesB64;
-  }
-  // copy to clipboard
-  navigator.clipboard?.writeText(url).then(()=> alert('Share URL copied to clipboard'), ()=>{ prompt('Share URL (copy):', url); });
-}
-
-// consume share URL on load (if ?d= present)
-function tryConsumeShareParam(){
-  const params = new URLSearchParams(location.search);
-  const d = params.get('d');
-  if(!d) return;
-  try{
-    const compact = decodeURIComponent(d);
-    const entries = [];
-    for(let i=0;i<compact.length;i+=11){
-      const block = compact.slice(i,i+11);
-      if(block.length < 11) break;
-      const decoded = decodeEntryCompact(block);
-      entries.push(decoded);
-    }
-    // notes
-    const n = params.get('n');
-    if(n){
-      try{
-        const notesJson = b64urlDecode(n);
-        const notes = JSON.parse(notesJson);
-        for(let i=0;i<entries.length && i<notes.length;i++){
-          if(notes[i]) entries[i].note = notes[i];
-        }
-      }catch(e){ console.warn('notes decode failed', e); }
-    }
-    if(entries.length){
-      if(confirm('Import entries from shared link? OK to MERGE, Cancel to REPLACE.')){
-        const merged = mergeEntries(loadLog(), entries);
-        saveLog(merged);
-      } else {
-        saveLog(entries);
-      }
-      // remove query params to avoid repeated imports
-      history.replaceState({}, '', location.pathname);
-      render();
-      alert('Imported shared entries');
-    }
-  }catch(err){
-    console.error('Failed to parse share data', err);
-  }
-}
-
-// ---------- print PDF for last 24 hours ----------
-function generate24hPDF(){
-  const MS_DAY = 24 * 60 * 60 * 1000;
-  const entries = entriesInWindow(MS_DAY).slice().sort((a,b)=> a.ts - b.ts);
-  const w = window.open('', '_blank');
-  if(!w) { alert('Popup blocked. Please allow popups to print.'); return; }
-  const html = [];
-  html.push('<html><head><title>Baby Log — Last 24h</title>');
-  html.push('<style>body{font-family: -apple-system, BlinkMacSystemFont, Arial; padding:20px;} h1{font-size:18px;} table{width:100%;border-collapse:collapse;} td,th{padding:8px;border:1px solid #ddd;text-align:left;} .note{color:#333;font-size:12px;}</style>');
-  html.push('</head><body>');
-  html.push('<h1>Baby Log — Last 24 hours</h1>');
-  html.push('<table><thead><tr><th>Time</th><th>Type</th><th>Note</th></tr></thead><tbody>');
-  for(const e of entries){
-    const label = (e.type==='pee')? 'Pee' : (e.type==='poop')? 'Poop' : (e.type==='both')? 'Both' : (e.type==='feed_start')? 'Feed Start' : (e.type==='feed_stop')? 'Feed Stop' : e.type;
-    html.push(`<tr><td>${formatTime(e.ts)}</td><td>${label}</td><td class="note">${(e.note||'')}</td></tr>`);
-  }
-  html.push('</tbody></table>');
-  html.push('</body></html>');
-  w.document.write(html.join(''));
-  w.document.close();
-  // give it a moment to render then call print
-  setTimeout(()=> w.print(), 500);
 }
 
 // ---------- render ----------
@@ -375,7 +196,6 @@ function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt
 function setupListeners(){
   const peeBtn = document.getElementById('pee');
   const poopBtn = document.getElementById('poop');
-  const bothBtn = document.getElementById('both');
   const feedBtn = document.getElementById('feed');
   const exportBtn = document.getElementById('export');
   const importBtn = document.getElementById('importBtn');
@@ -383,12 +203,9 @@ function setupListeners(){
   const clearBtn = document.getElementById('clear');
   const addWithNote = document.getElementById('addWithNote');
   const noteInput = document.getElementById('noteInput');
-  const shareBtn = document.getElementById('shareBtn');
-  const printBtn = document.getElementById('printBtn');
 
   if(peeBtn) peeBtn.addEventListener('click', ()=> { addEntry('pee'); });
   if(poopBtn) poopBtn.addEventListener('click', ()=> { addEntry('poop'); });
-  if(bothBtn) bothBtn.addEventListener('click', ()=> { addEntry('both'); });
   if(feedBtn) feedBtn.addEventListener('click', ()=> { toggleFeed(); });
 
   if(addWithNote && noteInput){
